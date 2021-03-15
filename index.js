@@ -17,15 +17,16 @@ io.on("connection", (socket) => {
   // Join room
   socket.join(roomId);
 
+  // Get all connected users ids in a Set object
   const clients = io.sockets.adapter.rooms.get(roomId);
 
-  // Loop on clients variable (Set object) to get a tab with all ids in connection order
+  // Loop on clients variable to get a tab with all ids in connection order
   const tab = [];
   clients.forEach((value) => {
     tab.push(value);
   });
 
-  // add the last connected user in usersList variable
+  // Add the last connected user in usersList variable
   usersList.push({ userId: tab[tab.length - 1], userName });
 
   // Send usersList after connection of any user
@@ -38,7 +39,6 @@ io.on("connection", (socket) => {
 
   // Receive message
   socket.on("newChatMessage", (data) => {
-    console.log(data);
     // Send the message to all users
     data.date = new Date();
     io.to(roomId).emit("newChatMessage", data);
@@ -48,6 +48,10 @@ io.on("connection", (socket) => {
   socket.on("disconnect", function () {
     usersList = usersList.filter((elem) => elem.userId !== socket.id);
     io.to(roomId).emit("usersList", usersList);
+    // Send a disconnection message to all users except the disconnected one
+    socket.broadcast.emit("userDisconnection", {
+      newDisconnection: `${userName} has just leaved ${roomId}`,
+    });
   });
 });
 
