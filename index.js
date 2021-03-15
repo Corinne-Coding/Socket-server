@@ -6,33 +6,26 @@ const io = require("socket.io")(server, {
   },
 });
 
+// Tab to store id & username of each connected user
 let usersList = [];
-// usersList pour stocker à chaque connexion l'id et le username de l'utilisateur
 
-// Connection
+// Connection to WebSocket
 io.on("connection", (socket) => {
-  console.log(" ----------------- User connected ----------------- ");
-  // console.log(socket.handshake.query);
-  // socket.handshake.query => data envoyées lors de la connexion
-
+  // Informations received when a user is connected
   const { roomId, userName } = socket.handshake.query;
 
   // Join room
   socket.join(roomId);
-  console.log(`----- ${userName} joined ${roomId} ------`);
 
   const clients = io.sockets.adapter.rooms.get(roomId);
-  // io.sockets.adapter.rooms.get(roomId) => pour récupérer un objet Set avec les ids des users connectés dans la room
-  // clients.size => nombre de users
 
+  // Loop on clients variable (Set object) to get a tab with all ids in connection order
   const tab = [];
   clients.forEach((value) => {
     tab.push(value);
   });
 
-  // boucle pour renvoyer un tableau avec les ids des users, dans l'ordre de connexion
-
-  // ajouter les données (userId + userName) dans le tableau usersList
+  // add the last connected user in usersList variable
   usersList.push({ userId: tab[tab.length - 1], userName });
 
   // Send usersList after connection of any user
@@ -40,7 +33,7 @@ io.on("connection", (socket) => {
 
   // Send a connection message to all users except the sender
   socket.broadcast.emit("userConnection", {
-    message: `${userName} just entered in ${roomId}`,
+    newConnection: `${userName} has just entered in ${roomId}`,
   });
 
   // Receive message
@@ -51,7 +44,7 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("newChatMessage", data);
   });
 
-  // update usersList if a user disconnect
+  // Update usersList if a user disconnect
   socket.on("disconnect", function () {
     usersList = usersList.filter((elem) => elem.userId !== socket.id);
     io.to(roomId).emit("usersList", usersList);
