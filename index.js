@@ -84,7 +84,7 @@ io.on("connection", (socket) => {
 
     // Update and send typingList if a user disconnect
     typingList = typingList.filter((elem) => elem.userId !== socket.id);
-    io.to(roomId).emit("typingList", typingList);
+    io.to(roomId).emit("isTyping", typingList);
 
     // Send a disconnection message to all users except the disconnected one
     socket.broadcast.emit("userDisconnection", {
