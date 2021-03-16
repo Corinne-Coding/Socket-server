@@ -22,6 +22,7 @@ io.on("connection", (socket) => {
 
   // Get all connected users ids in a Set object
   const clients = io.sockets.adapter.rooms.get(roomId);
+  console.log(clients);
 
   // Loop on clients variable to get a tab with all ids in connection order
   const tab = [];
@@ -30,13 +31,14 @@ io.on("connection", (socket) => {
   });
 
   // Add the last connected user in usersList variable
-  usersList.push({ userId: tab[tab.length - 1], userName });
+  usersList.push({ roomId, userId: tab[tab.length - 1], userName });
 
-  // Send usersList after connection of any user
-  io.to(roomId).emit("usersList", usersList);
+  // Send filtered usersList after connection of any user
+  const tabToSend = usersList.filter((element) => element.roomId === roomId);
+  io.to(roomId).emit("usersList", tabToSend);
 
   // Send a connection message to all users except the sender
-  socket.broadcast.emit("userConnection", {
+  socket.to(roomId).broadcast.emit("userConnection", {
     newConnection: `${userName} has just entered ${roomId}`,
   });
 
@@ -80,14 +82,15 @@ io.on("connection", (socket) => {
   socket.on("disconnect", function () {
     // Update and send usersList if a user disconnect
     usersList = usersList.filter((elem) => elem.userId !== socket.id);
-    io.to(roomId).emit("usersList", usersList);
+    const tabToSend = usersList.filter((element) => element.roomId === roomId);
+    io.to(roomId).emit("usersList", tabToSend);
 
     // Update and send typingList if a user disconnect
     typingList = typingList.filter((elem) => elem.userId !== socket.id);
     io.to(roomId).emit("isTyping", typingList);
 
     // Send a disconnection message to all users except the disconnected one
-    socket.broadcast.emit("userDisconnection", {
+    socket.to(roomId).broadcast.emit("userDisconnection", {
       newDisconnection: `${userName} has just leaved ${roomId}`,
     });
   });
@@ -97,6 +100,6 @@ app.get("/", (req, res) => {
   res.send("Welcome on my Socket server");
 });
 
-server.listen(process.env.PORT, () => {
+server.listen(process.env.PORT || 4000, () => {
   console.log(`Server started and listening on port 4000`);
 });
