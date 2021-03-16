@@ -9,6 +9,9 @@ const io = require("socket.io")(server, {
 // Tab to store id & username of each connected user
 let usersList = [];
 
+// Tab to store id & username of each typing user
+let typingList = [];
+
 // Connection to WebSocket
 io.on("connection", (socket) => {
   // Informations received when a user is connected
@@ -34,7 +37,7 @@ io.on("connection", (socket) => {
 
   // Send a connection message to all users except the sender
   socket.broadcast.emit("userConnection", {
-    newConnection: `${userName} has just entered in ${roomId}`,
+    newConnection: `${userName} has just entered ${roomId}`,
   });
 
   // Receive message
@@ -44,10 +47,45 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("newChatMessage", data);
   });
 
-  // Update usersList if a user disconnect
+  // Receive isTyping event
+  socket.on("isTyping", (data) => {
+    // If user is typing, add it in typingList
+    if (data.typing) {
+      // search if userId is already in typingList or not
+      let isPresent = false;
+      typingList.forEach((element) => {
+        if (element.userId === data.userId) {
+          isPresent = true;
+        }
+      });
+      // if not, add user in typingList
+      if (!isPresent) {
+        typingList.push({
+          isTyping: data.typing,
+          userId: data.userId,
+          userName: data.userName,
+        });
+      }
+    } else {
+      // If user stopped typing, remove it from typingList
+      typingList = typingList.filter(
+        (element) => element.userId !== data.userId
+      );
+    }
+
+    io.to(roomId).emit("isTyping", typingList);
+  });
+
+  // Disconnection from WebSocket
   socket.on("disconnect", function () {
+    // Update and send usersList if a user disconnect
     usersList = usersList.filter((elem) => elem.userId !== socket.id);
     io.to(roomId).emit("usersList", usersList);
+
+    // Update and send typingList if a user disconnect
+    typingList = typingList.filter((elem) => elem.userId !== socket.id);
+    io.to(roomId).emit("typingList", typingList);
+
     // Send a disconnection message to all users except the disconnected one
     socket.broadcast.emit("userDisconnection", {
       newDisconnection: `${userName} has just leaved ${roomId}`,
