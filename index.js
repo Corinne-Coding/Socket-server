@@ -61,7 +61,6 @@ io.on("connection", (socket) => {
     // send the message to all users
     const value = new Date();
     data.date = value.toLocaleTimeString();
-    console.log(value.toLocaleTimeString());
     io.to(roomId).emit("newChatMessage", data);
   });
 
