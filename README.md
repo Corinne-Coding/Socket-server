@@ -1,6 +1,6 @@
-# Socket-server
-
 <h1 align="center">Chat app Server</h1>
+
+<br />
 
 ## About this project
 
@@ -17,6 +17,10 @@ If you want to take a look on the frontend project made with **React** and **Soc
 - [socket.io](https://socket.io/)
 - [express](https://www.npmjs.com/package/express)
 - [cors](https://www.npmjs.com/package/cors)
+
+<br />
+
+<br />
 
 ## Install and run project
 
